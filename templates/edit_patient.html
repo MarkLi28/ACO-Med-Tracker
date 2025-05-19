@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Patient{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-radius: 4px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .form-full-width {
+        grid-column: 1 / -1;
+    }
+
+    select[multiple] {
+        height: 150px;
+    }
+
+    textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 1rem;
+        color: var(--primary-blue);
+        text-decoration: none;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container">
+        <h1>Edit Patient Record</h1>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="form-grid">
+                <div class="form-group">
+                    {{ form.year.label }}
+                    {{ form.year(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    {{ form.village.label }}
+                    {{ form.village(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    {{ form.first_name.label }}
+                    {{ form.first_name(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    {{ form.last_name.label }}
+                    {{ form.last_name(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    {{ form.age.label }}
+                    {{ form.age(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    {{ form.gender.label }}
+                    {{ form.gender(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    {{ form.blood_pressure.label }}
+                    {{ form.blood_pressure(class="form-control") }}
+                </div>
+                <div class="form-group form-full-width">
+                    {{ form.conditions.label }}
+                    {{ form.conditions(class="form-control") }}
+                </div>
+                <div class="form-group form-full-width">
+                    {{ form.prescriptions.label }}
+                    {{ form.prescriptions(class="form-control") }}
+                </div>
+                <div class="form-group form-full-width">
+                    {{ form.reason_for_diff_medication.label }}
+                    {{ form.reason_for_diff_medication(class="form-control") }}
+                </div>
+            </div>
+            {% if error %}
+                <div class="error">{{ error }}</div>
+            {% endif %}
+            <div class="form-group">
+                {{ form.submit(class="btn", value="Update Patient") }}
+            </div>
+        </form>
+        <a href="{{ url_for('home') }}" class="back-link">← Back to Home</a>
+    </div>
+</div>
+{% endblock %} 

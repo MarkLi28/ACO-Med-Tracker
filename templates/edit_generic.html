@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-radius: 4px;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .btn {
+        padding: 0.8rem 1.5rem;
+        background: var(--primary-blue);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn:hover {
+        opacity: 0.9;
+    }
+
+    .error {
+        color: #dc3545;
+        margin-top: 0.5rem;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-bottom: 1rem;
+        color: var(--primary-blue);
+        text-decoration: none;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="edit-container">
+        <a href="{{ url_for('manage_' + title.lower() + 's') }}" class="back-link">← Back to {{ title }}s</a>
+        <h1>Edit {{ title }}</h1>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.name.label if 'name' in form else form.year.label }}
+                {{ form.name(class="form-control") if 'name' in form else form.year(class="form-control") }}
+                {% if error %}
+                    <div class="error">{{ error }}</div>
+                {% endif %}
+            </div>
+            {{ form.submit(class="btn", value="Update " + title) }}
+        </form>
+    </div>
+</div>
+{% endblock %} 

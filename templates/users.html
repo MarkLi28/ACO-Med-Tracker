@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Users{% endblock %}
+
+{% block extra_css %}
+<style>
+    .users-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-radius: 4px;
+    }
+
+    .user-list {
+        list-style: none;
+    }
+
+    .user-item {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .user-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="users-container">
+        <h1>Users List</h1>
+        <ul class="user-list">
+            {% for user in users %}
+                <li class="user-item">
+                    <strong>{{ user.name }}</strong> - {{ user.email }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
