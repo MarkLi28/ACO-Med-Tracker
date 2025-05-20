@@ -1,7 +1,10 @@
 import matplotlib
 matplotlib.use('Agg') 
-from flask import Flask, render_template, request, redirect, url_for, current_app
+from flask import Flask, render_template, request, redirect, url_for, current_app, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin, login_user, login_required, logout_user, current_user
+from flask_login import LoginManager
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, SelectField, SubmitField, SelectMultipleField, TextAreaField
 from wtforms.validators import DataRequired
@@ -38,8 +41,21 @@ app.config['COGNITO_USER_POOL_ID'] = 'your-user-pool-id'
 app.config['COGNITO_APP_CLIENT_ID'] = 'your-app-client-id'
 
 db = SQLAlchemy(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 # Models
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
 class Patient(db.Model):
     __tablename__ = 'patients'
     id = db.Column(db.Integer, primary_key=True)
@@ -138,6 +154,14 @@ class YearForm(FlaskForm):
     year = IntegerField('Year', validators=[DataRequired()])
     submit = SubmitField('Add Year')
 
+#User Loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 # Helper Function to Generate Bar Charts
 def generate_chart(data, x_label, y_label, title):
     # Sort the data alphabetically by keys (conditions/prescriptions)
@@ -193,7 +217,8 @@ def get_cognito_token():
         )
         return response['AuthenticationResult']['IdToken']
     except ClientError as e:
-        current_app.logger.error(f"Cognito authentication error: {str(e)}")
+        with app.app_context():
+            current_app.logger.error(f"Cognito authentication error: {str(e)}")
         return None
 
 def start_sync_worker():
@@ -227,10 +252,12 @@ def start_sync_worker():
                                 entry.synced = True
                                 db.session.commit()
                         except Exception as e:
-                            current_app.logger.error(f"Sync error for entry {entry.id}: {str(e)}")
+                            with app.app_context():
+                                current_app.logger.error(f"Sync error for entry {entry.id}: {str(e)}")
                             
             except Exception as e:
-                current_app.logger.error(f"Sync worker error: {str(e)}")
+                with app.app_context():
+                    current_app.logger.error(f"Sync worker error: {str(e)}")
                 
             time.sleep(300)  # 5 minutes
 
@@ -238,6 +265,25 @@ def start_sync_worker():
     sync_thread.start()
 
 # Routes
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            login_user(user)
+            return redirect(url_for('home'))
+        else:
+            flash('Invalid username or password')
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
     # Get all available years and villages from the database
@@ -293,7 +339,11 @@ def home():
                          village_filter=village_filter)
 
 @app.route('/create_ticket', methods=['GET', 'POST'])
+@login_required
 def create_ticket():
+    if not current_user.is_admin:
+        return "Access denied", 403
+    
     form = TicketForm()
     form.village.choices = [(v.name, v.name) for v in Village.query.order_by(Village.name).all()]
     form.year.choices = [(y.year, str(y.year)) for y in Year.query.order_by(Year.year.desc()).all()]
